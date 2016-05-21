@@ -25,6 +25,7 @@ library
                        Data.SymReg.Functions
                        Data.SymReg.Misc
                        Data.SymReg.Parser
+                       Data.Music.Music
 
   build-depends:       base >= 4.7 && < 5
                      , text
@@ -32,6 +33,7 @@ library
                      , MonadRandom
                      , attoparsec
                      , deepseq >= 1.4.1.1
+                     , vector >= 0.11.0.0
 
   default-extensions:  RecordWildCards
                        OverloadedStrings
