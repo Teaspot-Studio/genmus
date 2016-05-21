@@ -44,11 +44,13 @@ data MelodyOptions = MelodyOptions{
 , melodyNoteLengthRatio :: Rational
 , melodyNoteLengthMin :: Int  
 , melodyNoteLengthMax :: Int
+, melodyOctaveMin :: Int
+, melodyOctaveMax :: Int
 }
 
-generateMelody :: MelodyOptions -> IO Melody
-generateMelody MelodyOptions{..} = do
-  melodyLength <- uniform [melodyLengthMin .. melodyLengthMax]
+generateMelody :: MelodyOptions -> Int -> IO Melody
+generateMelody MelodyOptions{..} oct = do
+  melodyLength <- uniform [melodyLengthMin .. melodyLengthMax] 
   chunksActions <- replicateM melodyLength $  -- sequence :: Vector (IO a) -> IO (Vector a)
     fromList [
         (genNote, melodyNoteRatio)
@@ -58,6 +60,10 @@ generateMelody MelodyOptions{..} = do
   chunks <- sequence chunksActions
   return $ V.fromList chunks
   where 
+  getNoteList = [(genNote, melodyNoteRatio), (genNoteLength, melodyLengthModRatio)]
+      ++ if oct < melodyOctaveMax then [(return NoteUp, melodyOctaveModRatio / 2)] else []
+      ++ if oct > melodyOctaveMin then [(return NoteDown, melodyOctaveModRatio / 2)] else []
+
   genNote = do 
     note <- uniform allNotes
     mode <- do 

@@ -17,10 +17,12 @@ opts = MelodyOptions {
   , melodyNoteLengthRatio = 0.3
   , melodyNoteLengthMin = 1
   , melodyNoteLengthMax = 16
-  }
+  , melodyOctaveMin = 1
+  , melodyOctaveMax = 4
+}
 
 main :: IO ()
 main = do
-  melody <- generateMelody opts
+  melody <- generateMelody opts 2
   let ms = printMelody melody 
   putStrLn ms 
