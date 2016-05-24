@@ -3,6 +3,7 @@ module Main where
 import Data.SymReg
 import Data.Genetics
 import Data.Music.Music
+import MML
 
 opts :: MelodyOptions
 opts = MelodyOptions {
@@ -12,11 +13,11 @@ opts = MelodyOptions {
   , melodyLengthModRatio = 0.1
   , melodyNoteRatio = 0.8
   , melodyLengthModMin = 1
-  , melodyLengthModMax = 16
+  , melodyLengthModMax = 9
   , melodyNoteModRatio = 0.2
   , melodyNoteLengthRatio = 0.3
   , melodyNoteLengthMin = 1
-  , melodyNoteLengthMax = 16
+  , melodyNoteLengthMax = 9
   , melodyOctaveMin = 1
   , melodyOctaveMax = 4
 }
@@ -24,5 +25,7 @@ opts = MelodyOptions {
 main :: IO ()
 main = do
   melody <- generateMelody opts 2
-  let ms = printMelody melody 
+  let ms = printMelody melody
   putStrLn ms 
+  saveMelody melody 2 "new.midi"
+  print "saved"

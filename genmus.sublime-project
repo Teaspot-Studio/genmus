@@ -1,14 +1,14 @@
 {
-	"folders":
-	[
-		{
-			"follow_symlinks": true,
-			"path": "."
-		}
-	],
+  "folders":
+  [
+    {
+      "follow_symlinks": true,
+      "path": "."
+    }
+  ],
   "build_systems": [{
     "name": "Stack",
-    "shell_cmd": "stack install && symreg",
+    "shell_cmd": "stack install && genmus",
     "working_dir": "${project_path}"
     }]
 }

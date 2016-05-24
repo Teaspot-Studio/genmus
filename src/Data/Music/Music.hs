@@ -23,6 +23,7 @@ import qualified Data.Vector as V
 
 data Note = 
   NoteA | NoteB | NoteC | NoteD | NoteE | NoteF | NoteG | NoteP
+  deriving Eq
 
 allNotes :: [Note]
 allNotes = [NoteA, NoteB, NoteC, NoteD, NoteE, NoteF, NoteG, NoteP]
@@ -71,15 +72,17 @@ generateMelody MelodyOptions{..} os = do
       ++ if oct < melodyOctaveMax then [(return NoteUp, melodyOctaveModRatio / 2)] else []
       ++ if oct > melodyOctaveMin then [(return NoteDown, melodyOctaveModRatio / 2)] else []
 
+  -- Как выяснилось, хаскоровский парсер хочет чтобы после паузы обязательно была продолжительность
+  -- А так же в изначальном генераторе был косяк -- пауза-диез :D
   genNote = do 
     note <- uniform allNotes
     mode <- do 
       isgen <- fromList [(False, 1 - melodyNoteModRatio), (True, melodyNoteModRatio)]
-      if isgen then Just <$> uniform [NoteBemol, NoteDiez]
+      if (isgen && note /= NoteP) then Just <$> uniform [NoteBemol, NoteDiez]
         else return Nothing
     lngth <- do 
       isgen <- fromList [(False, 1 - melodyNoteLengthRatio), (True, melodyNoteLengthRatio)]
-      if isgen then Just <$> uniform [melodyNoteLengthMin .. melodyNoteLengthMax]
+      if (isgen || note == NoteP) then Just <$> uniform [melodyNoteLengthMin .. melodyNoteLengthMax]
         else return Nothing
     return $ NoteChunk note mode lngth 
 
@@ -88,7 +91,7 @@ generateMelody MelodyOptions{..} os = do
 printMelody :: Melody -> String
 printMelody = V.foldl' printChunk ""
   where 
-  printChunk acc ch = acc ++ " " ++ case ch of 
+  printChunk acc ch = acc ++ "" ++ case ch of 
     NoteChunk note mode lngth -> printNote note ++ maybe "" printMode mode ++ maybe "" show lngth 
     NoteUp -> ">"
     NoteDown -> "<"
