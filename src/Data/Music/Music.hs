@@ -1,3 +1,5 @@
+{-#LANGUAGE ScopedTypeVariables#-}
+
 module Data.Music.Music(
     Note(..)
   , NoteMod(..)
@@ -49,18 +51,23 @@ data MelodyOptions = MelodyOptions{
 }
 
 generateMelody :: MelodyOptions -> Int -> IO Melody
-generateMelody MelodyOptions{..} oct = do
+generateMelody MelodyOptions{..} os = do
   melodyLength <- uniform [melodyLengthMin .. melodyLengthMax] 
-  chunksActions <- replicateM melodyLength $  -- sequence :: Vector (IO a) -> IO (Vector a)
-    fromList [
-        (genNote, melodyNoteRatio)
-      , (return NoteUp, melodyOctaveModRatio / 2)
-      , (return NoteDown, melodyOctaveModRatio / 2)
-      , (genNoteLength, melodyLengthModRatio)]
-  chunks <- sequence chunksActions
+  (_, ca) <- foldM (\(o,m) _ -> do
+          n <- fromList $ getNoteList o
+          t <- n
+          let on = case t of
+                    NoteDown -> o - 1
+                    NoteUp -> o + 1
+                    _ -> o
+          return (on, m ++ [n])
+        ) (os, ([] :: [IO NoteChunk])) [1 .. melodyLength]
+  chunks <- sequence ca
   return $ V.fromList chunks
-  where 
-  getNoteList = [(genNote, melodyNoteRatio), (genNoteLength, melodyLengthModRatio)]
+
+  where
+  getNoteList :: Int -> [(IO NoteChunk, Rational)]
+  getNoteList oct = [(genNote, melodyNoteRatio), (genNoteLength, melodyLengthModRatio)]
       ++ if oct < melodyOctaveMax then [(return NoteUp, melodyOctaveModRatio / 2)] else []
       ++ if oct > melodyOctaveMin then [(return NoteDown, melodyOctaveModRatio / 2)] else []
 
