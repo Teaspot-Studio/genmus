@@ -3,7 +3,7 @@
 	[
 		{
 			"name": "Stack",
-			"shell_cmd": "stack install && genmus",
+			"shell_cmd": "stack install && symreg",
 			"working_dir": "${project_path}"
 		}
 	],
@@ -11,7 +11,7 @@
 	[
 		{
 			"follow_symlinks": true,
-			"path": "."
+			"path": "/home/nazgul/teaspot/genetic/genmus"
 		}
 	]
 }

@@ -7,10 +7,13 @@ module Data.Music.Music(
   , Melody 
   , MelodyOptions(..)
   , generateMelody
+  , mutateMelody
+  , crossoverMelodies
   , printMelody
   ) where
 
 import Data.Text (Text, unpack, pack)
+import Data.List
 import Control.DeepSeq
 import GHC.Generics  
 import Control.Monad
@@ -49,6 +52,8 @@ data MelodyOptions = MelodyOptions{
 , melodyNoteLengthMax :: Int
 , melodyOctaveMin :: Int
 , melodyOctaveMax :: Int
+, melodyMutateRatio :: Rational
+, melodyBlockLength :: Int
 }
 
 generateMelody :: MelodyOptions -> Int -> IO Melody
@@ -110,3 +115,67 @@ printMelody = V.foldl' printChunk ""
     NoteF -> "f" 
     NoteG -> "g" 
     NoteP -> "p"
+
+
+
+mutateMelody :: MelodyOptions -> Melody -> IO Melody
+mutateMelody MelodyOptions{..} melody = sliceNdice melody
+  where 
+    sliceNdice :: Melody -> IO Melody
+    sliceNdice mel = diceBlock (changePoint (length (splitFold mel)) ) (splitFold mel) 
+      where
+        splitFold :: Melody -> [Melody]
+        splitFold mel 
+          | V.null mel = []
+          | otherwise     = (V.take melodyBlockLength mel) : (splitFold (V.drop melodyBlockLength mel))
+
+        changePoint :: Int -> IO Int
+        changePoint length = do
+          cP <- uniform [0 .. length]
+          return cP
+
+        diceBlock :: IO Int -> [Melody] -> IO Melody
+        diceBlock changePoint melArr = do 
+          cP <- changePoint
+          let leftPart = take (cP - 1) melArr
+          let rightPart = drop cP melArr
+          newBlock <- generateMelody (makeOptsWithNeedLenght (V.length (melArr !! cP))) 2
+          return $ V.concat $ leftPart ++ [newBlock] ++ rightPart
+
+        makeOptsWithNeedLenght :: Int -> MelodyOptions
+        makeOptsWithNeedLenght length = MelodyOptions {
+            melodyLengthMin = length
+          , melodyLengthMax = length
+          , melodyOctaveModRatio = 0.1
+          , melodyLengthModRatio = 0.1
+          , melodyNoteRatio = 0.8
+          , melodyLengthModMin = 1
+          , melodyLengthModMax = 9
+          , melodyNoteModRatio = 0.2
+          , melodyNoteLengthRatio = 0.3
+          , melodyNoteLengthMin = 1
+          , melodyNoteLengthMax = 9
+          , melodyOctaveMin = 1
+          , melodyOctaveMax = 4
+          , melodyMutateRatio = 0.3
+          , melodyBlockLength = 4
+        }
+
+
+crossoverMelodies :: MelodyOptions -> (Melody,Melody) -> IO (Melody, Melody)
+crossoverMelodies MelodyOptions{..} (fstMel,sndMel) = changeThem (changePoints (fstMel,sndMel)) (fstMel,sndMel)
+  where
+    changePoints :: (Melody, Melody) -> IO (Int, Int) 
+    changePoints (fstMel, sndMel) = do
+      (fstCP :: Int) <- uniform [((V.length sndMel) - melodyLengthMin) .. (melodyLengthMax - (V.length sndMel))]
+      (sndCP :: Int) <- uniform [(melodyLengthMin - fstCP) .. (melodyLengthMax - ((length fstMel) - fstCP))]
+      return (fstCP, sndCP)
+
+    changeThem :: IO (Int, Int) -> (Melody, Melody) -> IO (Melody, Melody)
+    changeThem mPoints (fstMel, sndMel) = do
+      points <- mPoints
+      let fstCP = fst points
+      let sndCP = snd points 
+      let newFstMel = V.concat $ [(V.take fstCP fstMel)] ++ [(V.drop sndCP sndMel)]
+      let newSndMel = V.concat $ [(V.take sndCP sndMel)] ++ [(V.drop fstCP fstMel)]
+      return (newFstMel, newSndMel)

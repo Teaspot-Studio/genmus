@@ -18,6 +18,6 @@ saveMelody m o fp = Render.fileFromGeneralMIDIMusic fp mel
     mel = melodyToMidi m o 
 
 melodyToMidi :: GM.Melody -> Int -> MidiMusic.T
-melodyToMidi m oct = MidiMusic.fromMelodyNullAttr MidiMusic.AcousticGrandPiano $ toMusic oct mml
+melodyToMidi m oct = MidiMusic.fromMelodyNullAttr MidiMusic.AcousticGrandPiano $ toMusic oct mml -- toMusic :: Octave -> String -> T ()
   where
     mml = GM.printMelody m
